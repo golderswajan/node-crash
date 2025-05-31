@@ -1,5 +1,4 @@
 // Req Res handler
-
 const url = require('url');
 const {StringDecoder} = require('string_decoder');
 const {notFoundHandler} = require('../handlers/routerHandlers/notFoundHandler');
@@ -31,7 +30,14 @@ handlers.handleReqRes = (req, res) => {
 
         const chosenHandler = routes[trimmedPath] ? routes[trimmedPath] : notFoundHandler;
 
-        chosenHandler(requestProperties, (statusCode, payload) => {
+        req.on('data', (buffer) => {
+                realData += decoder.write(buffer);
+        })
+
+        req.on('end', () => {
+            realData += decoder.end();
+            
+            chosenHandler(requestProperties, (statusCode, payload) => {
             statusCode = typeof(statusCode) === 'number' ? statusCode : 500;
             payload = typeof(payload) === 'object' ? payload : {};
 
@@ -40,17 +46,9 @@ handlers.handleReqRes = (req, res) => {
             res.writeHead(statusCode);
             res.end(payloadSring);
 
-        });
-
-        req.on('data', (buffer) => {
-                realData += decoder.write(buffer);
-        })
-
-        req.on('end', () => {
-                realData += decoder.end();
-                 console.log(realData);
-                //response handling
-                res.end('Hello World');
+            });
+            //response handling
+            // res.end('Hello World');
         })
         
 }
